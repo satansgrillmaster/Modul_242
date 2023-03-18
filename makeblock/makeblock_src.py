@@ -16,6 +16,8 @@ range_y_pos = 150
 default_speed_x = 0
 default_speed_y = 0
 
+ts = None
+
 
 class MoveController:
 
@@ -56,7 +58,7 @@ class Configuration:
 
     def set_led_config(self):
         color = self.data['color']
-        halo.led.show_all(color['r'], color['g'], color['b'], 100)
+        halo.led.show_all(color['r'], color['g'], color['b'], 10)
 
 
 class SocketHandler:
@@ -92,8 +94,7 @@ class SocketHandler:
                 config = Configuration(json.loads(response))
             s.close()
 
-            if first_request != 0:
-                self.init_request('DATA_UPDATE_REQUEST', '')
+            self.init_request('DATA_UPDATE_REQUEST', '')
 
             time.sleep(0.5)
 
@@ -107,6 +108,8 @@ class SocketHandler:
 
 @event.start
 def on_start():
+    global ts
+
     halo.led.show_all(255, 255, 255, 10)
     halo.wifi.start(ssid='Salt_2GHz_8A9EB3', password='r7okjbSXZnuVr32v2h', mode=halo.wifi.WLAN_MODE_STA)
 
@@ -114,7 +117,6 @@ def on_start():
         time.sleep(0.1)
 
     halo.led.off_all()
-
     ts = SocketHandler()
     ts.init_request('NEW_CONNECTION', '')
     _thread.start_new_thread(ts._send_request, ())
@@ -124,4 +126,6 @@ def on_start():
 
 @event.button_pressed
 def on_button_pressed():
-    halo.stop_all_scripts()
+    global ts
+
+    ts.init_request('WARRNING', 'test')
