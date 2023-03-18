@@ -25,9 +25,12 @@ class DbManager:
                 if list(values)[-1] != x:
                     query += ", "
             query += " from " + table_name
-            if len(list(values)) > 0:
+            if len(list(condition)) > 0:
                 query += " where "
                 for x, y in condition.items():
+                    if len(y) > 3:
+                        if y[3] == '.':
+                            y = "'" + y + "'"
                     query += x + " = " + y
                     if list(condition)[-1] != x:
                         query += " and "
