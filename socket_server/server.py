@@ -7,7 +7,6 @@ import random
 
 
 class Server:
-
     NEW_CONNECTION_INFO_LVL = "NEW_CONNECTION"
     WARRNING_INFO_LVL = "WARRNING"
     ERROR_INFO_LVL = "ERROR"
@@ -27,39 +26,48 @@ class Server:
                 self.handle_halo_request(conn.recv(1024), addr)
 
                 halo_ring_config = self.db_manager.execute_query(Table.HALO_RING_CONFIG.value,
-                                                          QueryMethod.SELECT,
-                                                          {"led_color_idfk":""},
-                    {"adress": addr[0]})
+                                                                 QueryMethod.SELECT,
+                                                                 {"led_color_idfk": ""},
+                                                                 {"address": addr[0]})
 
                 led_color_config = self.db_manager.execute_query(Table.LED_COLOR.value,
-                                                          QueryMethod.SELECT,
-                                                          {"description":""},
-                                                          {"id": str(halo_ring_config[0][0])})
-                conn.sendto(led_color_config[0][0].encode('utf-8'), addr)
+                                                                 QueryMethod.SELECT,
+                                                                 {"r": "",
+                                                                  "g": "",
+                                                                  "b": ""},
+                                                                 {"id": str(halo_ring_config[0][0])})
+
+                response = {'color': {
+                    "r": led_color_config[0][0],
+                    "g": led_color_config[0][1],
+                    "b": led_color_config[0][2]
+                }}
+
+                conn.sendto(json.dumps(response).encode('utf-8'), addr)
 
     def _init_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, self.port))
         return s
 
-    def handle_halo_request(self, request, adress):
+    def handle_halo_request(self, request, address):
         clean_data = json.loads(request)
         info_lvl = clean_data["request_info_lvl"]
 
         if info_lvl == Server.NEW_CONNECTION_INFO_LVL:
-            self.db_manager.execute_query(table_name=Table.HALO_RING_CONFIG.value,
-                                          query_method=QueryMethod.INSERT,
-                                          values={
-                                              "adress": adress[0],
-                                              "led_color_idfk": "2",
-                                          }, )
+            try:
+                self.db_manager.execute_query(table_name=Table.HALO_RING_CONFIG.value,
+                                              query_method=QueryMethod.INSERT,
+                                              values={"address": address[0],
+                                                      "led_color_idfk": "1"})
+            except Exception as e:
+                print(e)
+
         elif info_lvl == Server.WARRNING_INFO_LVL or info_lvl == Server.ERROR_INFO_LVL:
             self.db_manager.execute_query(table_name=Table.TASK_LOG.value,
                                           query_method=QueryMethod.INSERT,
-                                          values={
-                                              "request_info_lvl": info_lvl,
-                                              "log_message": clean_data["message"],
-                                              "request_ip": adress[0]
-                                          }, )
+                                          values={"request_info_lvl": info_lvl,
+                                                  "log_message": clean_data["message"],
+                                                  "request_ip": address[0]})
         else:
             print(clean_data)

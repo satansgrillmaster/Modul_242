@@ -18,7 +18,7 @@ create table led_color (
 drop table if exists halo_ring_config;
 create table halo_ring_config (
     id INTEGER NOT NULL PRIMARY KEY,
-    adress varChar(255),
+    address varChar(255) unique,
     led_color_idfk int,
     FOREIGN KEY (led_color_idfk) REFERENCES led_color(id)
                       );
