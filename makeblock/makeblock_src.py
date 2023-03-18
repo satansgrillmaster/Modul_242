@@ -4,6 +4,49 @@ import socket
 import json
 import _thread
 
+pos_x = 0
+pos_y = 0
+
+range_x_neg = -150
+range_y_neg = -150
+
+range_x_pos = 150
+range_y_pos = 150
+
+default_speed_x = 0
+default_speed_y = 0
+
+
+class MoveController:
+
+    @staticmethod
+    def calculate_movement(default_x, default_y, speed_x, speed_y, pos_x, pos_y):
+        speed_diff = 0
+
+        # print('speedx: {}  speedy: {}'.format(speed_x,speed_y))
+
+        if speed_x > 0:
+            speed_diff = default_x - speed_x
+            if speed_diff > 0.1:
+                pos_x = pos_x + speed_x * 0.1
+        else:
+            speed_diff = default_x + speed_x
+            if speed_diff > -0.1:
+                pos_x = pos_x + speed_x * 0.1
+
+        if speed_y > 0:
+            speed_diff = default_y - speed_y
+            if speed_diff > 0.1:
+                pos_y = pos_y + speed_y * 0.1
+        else:
+            speed_diff = default_y + speed_y
+            if speed_diff > -0.1:
+                pos_y = pos_y + speed_y * 0.1
+
+        # print('posx: {}  posy: {}'.format(pos_x, pos_y))
+
+        return (pos_x, pos_y)
+
 
 class Configuration:
 
@@ -13,7 +56,7 @@ class Configuration:
 
     def set_led_config(self):
         color = self.data['color']
-        halo.led.show_all(color['r'], color['g'], color['b'], 10)
+        halo.led.show_all(color['r'], color['g'], color['b'], 100)
 
 
 class SocketHandler:
@@ -76,7 +119,6 @@ def on_start():
     ts.init_request('NEW_CONNECTION', '')
     _thread.start_new_thread(ts._send_request, ())
 
-    time.sleep(10)
     # ts.close_thread()
 
 
