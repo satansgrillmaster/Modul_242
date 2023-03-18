@@ -11,6 +11,9 @@ class Server:
     WARRNING_INFO_LVL = "WARRNING"
     ERROR_INFO_LVL = "ERROR"
 
+    REQUEST_SUCCESS = '200'
+    REQUEST_ERROR = '400'
+
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -38,6 +41,8 @@ class Server:
     def handle_halo_request(self, request, address):
         clean_data = json.loads(request)
         info_lvl = clean_data["request_info_lvl"]
+        response_code = Server.REQUEST_SUCCESS
+        response_message = 'ok'
 
         if info_lvl == Server.NEW_CONNECTION_INFO_LVL:
             try:
@@ -46,7 +51,8 @@ class Server:
                                               values={"address": address[0],
                                                       "led_color_idfk": "1"})
             except Exception as e:
-                print(e)
+                response_code = Server.REQUEST_ERROR
+                response_message = 'Server error: ' + str(e)
 
         elif info_lvl == Server.WARRNING_INFO_LVL or info_lvl == Server.ERROR_INFO_LVL:
             self.db_manager.execute_query(table_name=Table.TASK_LOG.value,
@@ -54,8 +60,6 @@ class Server:
                                           values={"request_info_lvl": info_lvl,
                                                   "log_message": clean_data["message"],
                                                   "request_ip": address[0]})
-        else:
-            print(clean_data)
 
         halo_ring_config = self.db_manager.execute_query(Table.HALO_RING_CONFIG.value,
                                                          QueryMethod.SELECT,
@@ -69,10 +73,11 @@ class Server:
                                                           "b": ""},
                                                          {"id": str(halo_ring_config[0][0])})
 
-        response = {'color': {
-            "r": led_color_config[0][0],
-            "g": led_color_config[0][1],
-            "b": led_color_config[0][2]
-        }}
+        response = {'header': {'code': response_code,
+                               'message': response_message},
+                    'color': {"r": led_color_config[0][0],
+                              "g": led_color_config[0][1],
+                              "b": led_color_config[0][2]}
+                    }
 
         return response
