@@ -28,10 +28,11 @@ class DbManager:
             if len(list(condition)) > 0:
                 query += " where "
                 for x, y in condition.items():
-                    if len(y) > 3:
-                        if y[3] == '.':
-                            y = "'" + y + "'"
-                    query += x + " = " + y
+                    query += x + " = "
+                    if isinstance(y,str):
+                        query += "'" + y + "'"
+                    else:
+                        query += y
                     if list(condition)[-1] != x:
                         query += " and "
 
@@ -79,6 +80,7 @@ class DbManager:
                     query += " and "
 
         query += ";"
+        print(query)
         res = cur.execute(query).fetchall()
         con.commit()
         con.close()
