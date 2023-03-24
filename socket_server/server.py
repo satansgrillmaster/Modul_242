@@ -36,23 +36,28 @@ class Server:
 
             with conn:
                 response = self.handle_halo_request(conn.recv(1024), addr)
-                conn.sendto(json.dumps(response).encode('utf-8'), addr)
+                for client_adress in response['header']['clients']:
+                    conn.sendto(json.dumps(response).encode('utf-8'), (client_adress[0], int(client_adress[1])))
 
     def handle_halo_request(self, request, address):
         clean_data = json.loads(request)
         info_lvl = clean_data["request_info_lvl"]
         response_code = Server.REQUEST_SUCCESS
         response_message = 'ok'
+        clients = []
 
         if info_lvl == Server.NEW_CONNECTION_INFO_LVL:
             try:
                 self.db_manager.execute_query(table_name=Table.HALO_RING_CONFIG.value,
                                               query_method=QueryMethod.INSERT,
                                               values={"address": address[0],
-                                                      "led_color_idfk": "1"})
+                                                      "led_color_idfk": "1",
+                                                      "client_id": str(address[1])},
+                                                        )
             except Exception as e:
                 response_code = Server.REQUEST_ERROR
                 response_message = 'Server error: ' + str(e)
+            clients.append((address[0], address[1]))
 
         elif info_lvl == Server.WARRNING_INFO_LVL or info_lvl == Server.ERROR_INFO_LVL:
             self.db_manager.execute_query(table_name=Table.TASK_LOG.value,
@@ -60,6 +65,18 @@ class Server:
                                           values={"request_info_lvl": info_lvl,
                                                   "log_message": clean_data["message"],
                                                   "request_ip": address[0]})
+
+            reciving_clients = self.db_manager.execute_query(table_name=Table.HALO_RING_CONFIG.value,
+                                                             query_method=QueryMethod.SELECT,
+                                                             values={"address": "",
+                                                                     "client_id": ""},
+                                                             condition={"address": address[0]},
+                                                             negativ_condition=True)
+            for client in reciving_clients:
+                clients.append((client[0], client[1]))
+        else:
+            clients.append((address[0], address[1]))
+
 
         halo_ring_config = self.db_manager.execute_query(Table.HALO_RING_CONFIG.value,
                                                          QueryMethod.SELECT,
@@ -74,7 +91,8 @@ class Server:
                                                          {"id": str(halo_ring_config[0][0])})
 
         response = {'header': {'code': response_code,
-                               'message': response_message},
+                               'message': response_message,
+                               'clients': clients},
                     'color': {"r": led_color_config[0][0],
                               "g": led_color_config[0][1],
                               "b": led_color_config[0][2]}

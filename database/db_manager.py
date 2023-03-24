@@ -8,7 +8,7 @@ class DbManager:
     def __init__(self, db_path):
         self.db_path = db_path
 
-    def execute_query(self, table_name, query_method, values, condition=None):
+    def execute_query(self, table_name, query_method, values, condition=None, negativ_condition=False):
 
         if condition is None:
             condition = {}
@@ -28,7 +28,10 @@ class DbManager:
             if len(list(condition)) > 0:
                 query += " where "
                 for x, y in condition.items():
-                    query += x + " = "
+                    if negativ_condition:
+                        query += x + " != "
+                    else:
+                        query += x + " = "
                     if isinstance(y,str):
                         query += "'" + y + "'"
                     else:
@@ -80,7 +83,6 @@ class DbManager:
                     query += " and "
 
         query += ";"
-        print(query)
         res = cur.execute(query).fetchall()
         con.commit()
         con.close()
