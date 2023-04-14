@@ -13,4 +13,5 @@ class Table(Enum):
     HALO_RING_CONFIG = "halo_ring_config"
     LED_COLOR = "led_color"
     SENSOR_DATA = "sensordata"
+    UPDATE_SENSOR_DATA = "sensordata_new"
 

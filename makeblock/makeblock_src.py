@@ -96,33 +96,7 @@ class SocketHandler:
             s.close()
 
             if first_request == 1:
-                i = 0
-                mbuild.servo_driver.set_angle(0, 1)
-                time.sleep(5)
-                while i < 180:
-                    s = self._connect_to_server()
-                    self.request_info_lvl = "MAP_DATA_1"
-                    self.message = str(mbuild.ultrasonic_sensor.get_distance(1))
-
-                    s.send(json.dumps({
-                        "request_info_lvl": self.request_info_lvl,
-                        "message": self.message
-                    }))
-                    s.close()
-
-                    s = self._connect_to_server()
-                    self.request_info_lvl = "MAP_DATA_2"
-                    self.message = str(mbuild.ultrasonic_sensor.get_distance(2))
-
-                    s.send(json.dumps({
-                        "request_info_lvl": self.request_info_lvl,
-                        "message": self.message
-                    }))
-                    s.close()
-
-                    mbuild.servo_driver.set_angle(i, 1)
-                    time.sleep(0.2)
-                    i += 1
+                self.send_map_data(0)
                 first_request = 0
                 s = self._connect_to_server()
                 self.request_info_lvl = "DATA_PLOTTER"
@@ -134,11 +108,10 @@ class SocketHandler:
                 }))
                 s.close()
 
+            time.sleep(10)
+            self.send_map_data(1)
 
-            if mbuild.ultrasonic_sensor.get_distance(1) < 10:
-                self.init_request('OBSTACLE', str(mbuild.ultrasonic_sensor.get_distance(1)))
-            else:
-                self.init_request('DATA_UPDATE_REQUEST', '')
+            self.init_request('DATA_UPDATE_REQUEST', '')
 
             time.sleep(0.5)
 
@@ -148,6 +121,46 @@ class SocketHandler:
 
     def close_thread(self):
         self.is_alive = 0
+
+    def send_map_data(self, update):
+
+        info_lvl_first = ""
+        info_lvl_second = ""
+
+        if update:
+            info_lvl_first = "UPDATE_MAP_DATA_1"
+            info_lvl_second = "UPDATE_MAP_DATA_2"
+        else:
+            info_lvl_first = "MAP_DATA_1"
+            info_lvl_second = "MAP_DATA_2"
+
+        i = 0
+        mbuild.servo_driver.set_angle(0, 1)
+        time.sleep(3)
+        while i < 180:
+            s = self._connect_to_server()
+            self.request_info_lvl = info_lvl_first
+            self.message = str(mbuild.ultrasonic_sensor.get_distance(1))
+
+            s.send(json.dumps({
+                "request_info_lvl": self.request_info_lvl,
+                "message": self.message
+            }))
+            s.close()
+
+            s = self._connect_to_server()
+            self.request_info_lvl = info_lvl_second
+            self.message = str(mbuild.ultrasonic_sensor.get_distance(2))
+
+            s.send(json.dumps({
+                "request_info_lvl": self.request_info_lvl,
+                "message": self.message
+            }))
+            s.close()
+
+            mbuild.servo_driver.set_angle(i, 1)
+            time.sleep(0.3)
+            i += 1
 
 
 @event.start

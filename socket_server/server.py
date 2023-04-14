@@ -12,6 +12,9 @@ class Server:
     WARRNING_INFO_LVL = "WARRNING"
     MAP_DATA_1_INFO_LVL = "MAP_DATA_1"
     MAP_DATA_2_INFO_LVL = "MAP_DATA_2"
+    UPDATE_MAP_DATA_1_INFO_LVL = "UPDATE_MAP_DATA_1"
+    UPDATE_MAP_DATA_2_INFO_LVL = "UPDATE_MAP_DATA_2"
+
     PLOTTER_INFO_LVL = "DATA_PLOTTER"
     ERROR_INFO_LVL = "ERROR"
 
@@ -92,6 +95,22 @@ class Server:
 
         elif info_lvl == Server.MAP_DATA_2_INFO_LVL:
             self.db_manager.execute_query(table_name=Table.SENSOR_DATA.value,
+                                          query_method=QueryMethod.INSERT,
+                                          values={
+                                                  "sensor_2_data": clean_data["message"],
+                                                  })
+            clients.append((address[0], address[1]))
+
+        elif info_lvl == Server.UPDATE_MAP_DATA_1_INFO_LVL:
+            self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
+                                          query_method=QueryMethod.INSERT,
+                                          values={
+                                                  "sensor_1_data": clean_data["message"],
+                                                  })
+            clients.append((address[0], address[1]))
+
+        elif info_lvl == Server.UPDATE_MAP_DATA_2_INFO_LVL:
+            self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
                                           query_method=QueryMethod.INSERT,
                                           values={
                                                   "sensor_2_data": clean_data["message"],
