@@ -30,3 +30,9 @@ CREATE TABLE sensordata (
     sensor_1_data FLOAT,
     sensor_2_data FLOAT
 );
+
+drop table if exists sensordata_new;
+CREATE TABLE sensordata_new (
+    sensor_1_data FLOAT,
+    sensor_2_data FLOAT
+);
