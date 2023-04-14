@@ -3,12 +3,16 @@ import json
 from database import db_manager
 from constants import DB_NAME
 from enums import QueryMethod, Table
+from plotter import distance_plotter
 
 
 class Server:
 
     NEW_CONNECTION_INFO_LVL = "NEW_CONNECTION"
     WARRNING_INFO_LVL = "WARRNING"
+    MAP_DATA_1_INFO_LVL = "MAP_DATA_1"
+    MAP_DATA_2_INFO_LVL = "MAP_DATA_2"
+    PLOTTER_INFO_LVL = "DATA_PLOTTER"
     ERROR_INFO_LVL = "ERROR"
 
     REQUEST_SUCCESS = '200'
@@ -22,6 +26,9 @@ class Server:
         # start socket and listen for connections
         self.socket = self._init_socket()
         self._listen_to_connections()
+        self.num_distance = 0
+        self.distances = []
+        self.plotter = None
 
     def _init_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,6 +81,45 @@ class Server:
                                                              negativ_condition=True)
             for client in reciving_clients:
                 clients.append((client[0], client[1]))
+
+        elif info_lvl == Server.MAP_DATA_1_INFO_LVL:
+            self.db_manager.execute_query(table_name=Table.SENSOR_DATA.value,
+                                          query_method=QueryMethod.INSERT,
+                                          values={
+                                                  "sensor_1_data": clean_data["message"],
+                                                  })
+            clients.append((address[0], address[1]))
+
+        elif info_lvl == Server.MAP_DATA_2_INFO_LVL:
+            self.db_manager.execute_query(table_name=Table.SENSOR_DATA.value,
+                                          query_method=QueryMethod.INSERT,
+                                          values={
+                                                  "sensor_2_data": clean_data["message"],
+                                                  })
+            clients.append((address[0], address[1]))
+
+        elif info_lvl == Server.PLOTTER_INFO_LVL:
+            self.distances = self.db_manager.execute_query(table_name=Table.SENSOR_DATA.value,
+                                                            query_method=QueryMethod.SELECT,
+                                                            values={"sensor_1_data": "",
+                                                                    "sensor_2_data": ""},
+                                                            condition={"sensor_1_data": "null"},
+                                                            negativ_condition=True,
+                                                            )
+            self.distances += self.db_manager.execute_query(table_name=Table.SENSOR_DATA.value,
+                                                            query_method=QueryMethod.SELECT,
+                                                            values={"sensor_1_data": "",
+                                                                    "sensor_2_data": ""},
+                                                            condition={"sensor_2_data": "null"},
+                                                            negativ_condition=True,
+                                                            )
+
+            self.num_distance = len(self.distances)
+            self.plotter = self.plotter = distance_plotter.DistancePlotter(self.num_distance, self.distances)
+            self.plotter.calculate_and_draw(self.distances)
+            clients.append((address[0], address[1]))
+
+
         else:
             clients.append((address[0], address[1]))
 

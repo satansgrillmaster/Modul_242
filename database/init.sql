@@ -24,3 +24,9 @@ create table halo_ring_config (
     led_color_idfk int,
     FOREIGN KEY (led_color_idfk) REFERENCES led_color(id)
                       );
+
+drop table if exists sensordata;
+CREATE TABLE sensordata (
+    sensor_1_data FLOAT,
+    sensor_2_data FLOAT
+);

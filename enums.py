@@ -12,4 +12,5 @@ class Table(Enum):
     TASK_LOG = "task_log"
     HALO_RING_CONFIG = "halo_ring_config"
     LED_COLOR = "led_color"
+    SENSOR_DATA = "sensordata"
 

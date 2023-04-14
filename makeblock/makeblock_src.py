@@ -3,6 +3,7 @@ import event
 import socket
 import json
 import _thread
+import mbuild
 
 pos_x = 0
 pos_y = 0
@@ -70,7 +71,7 @@ class SocketHandler:
 
     def _connect_to_server(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("192.168.1.27", 5001))
+        s.connect(("10.65.4.32", 5001))
         return s
 
     def _send_request(self):
@@ -82,7 +83,6 @@ class SocketHandler:
                 "request_info_lvl": self.request_info_lvl,
                 "message": self.message
             }))
-
             time.sleep(0.5)
 
             try:
@@ -92,9 +92,53 @@ class SocketHandler:
 
             if response != 0:
                 config = Configuration(json.loads(response))
+
             s.close()
 
-            self.init_request('DATA_UPDATE_REQUEST', '')
+            if first_request == 1:
+                i = 0
+                mbuild.servo_driver.set_angle(0, 1)
+                time.sleep(5)
+                while i < 180:
+                    s = self._connect_to_server()
+                    self.request_info_lvl = "MAP_DATA_1"
+                    self.message = str(mbuild.ultrasonic_sensor.get_distance(1))
+
+                    s.send(json.dumps({
+                        "request_info_lvl": self.request_info_lvl,
+                        "message": self.message
+                    }))
+                    s.close()
+
+                    s = self._connect_to_server()
+                    self.request_info_lvl = "MAP_DATA_2"
+                    self.message = str(mbuild.ultrasonic_sensor.get_distance(2))
+
+                    s.send(json.dumps({
+                        "request_info_lvl": self.request_info_lvl,
+                        "message": self.message
+                    }))
+                    s.close()
+
+                    mbuild.servo_driver.set_angle(i, 1)
+                    time.sleep(0.2)
+                    i += 1
+                first_request = 0
+                s = self._connect_to_server()
+                self.request_info_lvl = "DATA_PLOTTER"
+                self.message = ''
+
+                s.send(json.dumps({
+                    "request_info_lvl": self.request_info_lvl,
+                    "message": self.message
+                }))
+                s.close()
+
+
+            if mbuild.ultrasonic_sensor.get_distance(1) < 10:
+                self.init_request('OBSTACLE', str(mbuild.ultrasonic_sensor.get_distance(1)))
+            else:
+                self.init_request('DATA_UPDATE_REQUEST', '')
 
             time.sleep(0.5)
 
@@ -110,8 +154,14 @@ class SocketHandler:
 def on_start():
     global ts
 
+
+    #while 1 == 1:
+    #    if mbuild.ultrasonic_sensor.get_distance(1) > 10:
+    #        print(mbuild.ultrasonic_sensor.get_distance(1))
+
+
     halo.led.show_all(255, 255, 255, 10)
-    halo.wifi.start(ssid='Salt_2GHz_8A9EB3', password='r7okjbSXZnuVr32v2h', mode=halo.wifi.WLAN_MODE_STA)
+    halo.wifi.start(ssid='KR-yellow', password='2601-9345-2477', mode=halo.wifi.WLAN_MODE_STA)
 
     while halo.wifi.is_connected() != 1:
         time.sleep(0.1)
