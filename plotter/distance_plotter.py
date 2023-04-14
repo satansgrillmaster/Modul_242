@@ -1,6 +1,6 @@
 import math
 import turtle
-
+from PIL import Image
 class DistancePlotter:
     def __init__(self, num_distances, distances):
         self.num_distances = num_distances
@@ -9,6 +9,7 @@ class DistancePlotter:
         self.turtle = turtle.Turtle()
         self.turtle.hideturtle()
         self.turtle.penup()
+        self.screen = turtle.Screen()  # Get the turtle screen
 
     def calculate_coordinates(self, distances):
         angle_step = 360 / len(distances)
@@ -56,8 +57,25 @@ class DistancePlotter:
         self.turtle.penup()
         self.turtle.pencolor("black")  # Reset the pen color to black
 
-    def exit_on_click(self):
-        turtle.exitonclick()
+    def draw_directions(self):
+        self.turtle.penup()
+        self.turtle.goto(-100, 0)
+        self.turtle.write("W", font=("Arial", 16, "bold"))
+        self.turtle.goto(100, 0)
+        self.turtle.write("E", font=("Arial", 16, "bold"))
+        self.turtle.goto(0, 100)
+        self.turtle.write("N", font=("Arial", 16, "bold"))
+        self.turtle.goto(0, -100)
+        self.turtle.write("S", font=("Arial", 16, "bold"))
+
+    def save_as_png(self, filename):
+        cv = turtle.getcanvas()
+        cv.postscript(file=filename, colormode="color")
+        try:
+            img = Image.open(filename)
+            img.save("test.png")
+        except ImportError:
+            print("PIL library not installed, saved as .eps")
 
     def calculate_and_draw(self, distances):
         left_coordinates, right_coordinates = self.calculate_coordinates(distances)
@@ -66,6 +84,9 @@ class DistancePlotter:
         print("Fläche links:", area_left)
         print("Fläche rechts:", area_right)
         self.draw(left_coordinates)
-        self.draw_center_to_first_point(left_coordinates)  # Add this line to draw the green line
+        self.draw_center_to_first_point(left_coordinates) # Add this line to draw the green line
         self.draw(right_coordinates)
-        self.draw_center_to_first_point(right_coordinates)  # Add this line to draw the green line
+        self.draw_center_to_first_point(right_coordinates) # Add this line to draw the green line
+        self.draw_directions() # Draw the directions
+        # self.save_as_png("output") # Save the output as a PNG file
+        self.screen.mainloop() # Remove the exit_on_click function and use mainloop() to keep the window open
