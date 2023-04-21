@@ -5,50 +5,7 @@ import json
 import _thread
 import mbuild
 
-pos_x = 0
-pos_y = 0
-
-range_x_neg = -150
-range_y_neg = -150
-
-range_x_pos = 150
-range_y_pos = 150
-
-default_speed_x = 0
-default_speed_y = 0
-
 ts = None
-
-
-class MoveController:
-
-    @staticmethod
-    def calculate_movement(default_x, default_y, speed_x, speed_y, pos_x, pos_y):
-        speed_diff = 0
-
-        # print('speedx: {}  speedy: {}'.format(speed_x,speed_y))
-
-        if speed_x > 0:
-            speed_diff = default_x - speed_x
-            if speed_diff > 0.1:
-                pos_x = pos_x + speed_x * 0.1
-        else:
-            speed_diff = default_x + speed_x
-            if speed_diff > -0.1:
-                pos_x = pos_x + speed_x * 0.1
-
-        if speed_y > 0:
-            speed_diff = default_y - speed_y
-            if speed_diff > 0.1:
-                pos_y = pos_y + speed_y * 0.1
-        else:
-            speed_diff = default_y + speed_y
-            if speed_diff > -0.1:
-                pos_y = pos_y + speed_y * 0.1
-
-        # print('posx: {}  posy: {}'.format(pos_x, pos_y))
-
-        return (pos_x, pos_y)
 
 
 class Configuration:
@@ -98,15 +55,6 @@ class SocketHandler:
             if first_request == 1:
                 self.send_map_data(0)
                 first_request = 0
-                s = self._connect_to_server()
-                self.request_info_lvl = "DATA_PLOTTER"
-                self.message = ''
-
-                s.send(json.dumps({
-                    "request_info_lvl": self.request_info_lvl,
-                    "message": self.message
-                }))
-                s.close()
 
             time.sleep(10)
             self.send_map_data(1)
@@ -160,7 +108,22 @@ class SocketHandler:
 
             mbuild.servo_driver.set_angle(i, 1)
             time.sleep(0.3)
-            i += 1
+            i += 10
+
+        s = self._connect_to_server()
+        if update:
+            self.request_info_lvl = "UPDATE_DATA_PLOTTER"
+            self.message = ''
+        else:
+            self.request_info_lvl = "DATA_PLOTTER"
+            self.message = ''
+
+        s.send(json.dumps({
+            "request_info_lvl": self.request_info_lvl,
+            "message": self.message
+        }))
+
+        s.close()
 
 
 @event.start

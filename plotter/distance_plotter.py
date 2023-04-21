@@ -1,12 +1,14 @@
 import math
 import turtle
 from PIL import Image
-
+import time
+from enums import QueryMethod, Table
 
 class DistancePlotter:
-    def __init__(self, num_distances, distances):
+    def __init__(self, num_distances, distances, db_manager):
         self.num_distances = num_distances
         self.distances = distances
+        self.db_manager = db_manager
         self.angle_step = 360 / num_distances
         self.turtle = turtle.Turtle()
         self.turtle.hideturtle()
@@ -103,7 +105,7 @@ class DistancePlotter:
         print("Fläche rechts:", area_right)
 
         first_distance = distances[0]
-        last_distance = distances[180]
+        last_distance = distances[35]
         print("Erste Distanz:", first_distance[0])
         print("Letzte Distanz:", last_distance[1])
 
@@ -119,4 +121,24 @@ class DistancePlotter:
         self.draw_center_to_first_point(right_coordinates)  # Add this line to draw the green line
         self.draw_directions()  # Draw the directions
         # self.save_as_png("output")  # Save the output as a PNG file
-        self.screen.mainloop()  # Remove the exit_on_click function and use mainloop() to keep the window open
+
+        self.screen.update()  # Update the screen to display the drawings
+        time.sleep(5)  # Pause for 5 seconds
+
+    def clear_drawing(self):
+        self.turtle.clear()
+        self.turtle.penup()
+        self.right_distances = []
+        self.left_distances = []
+
+    def redraw(self, num_distances, distances):
+        self.clear_drawing()
+        self.num_distances = num_distances
+        self.distances = distances
+        self.angle_step = 360 / num_distances
+        self.calculate_and_draw(distances)
+        self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
+                                      query_method=QueryMethod.DELETE,
+                                      values={},
+                                      )
+

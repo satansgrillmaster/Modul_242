@@ -16,7 +16,9 @@ class DbManager:
         con = sqlite3.connect(self.db_path)
         cur = con.cursor()
         query = ""
-        last_value_key = list(values)[-1]
+
+        if query_method != QueryMethod.DELETE:
+            last_value_key = list(values)[-1]
 
         if query_method == QueryMethod.SELECT:
             query = "select "
@@ -32,7 +34,7 @@ class DbManager:
                         query += x + " != "
                     else:
                         query += x + " = "
-                    if isinstance(y,str):
+                    if isinstance(y, str):
                         query += "'" + y + "'"
                     else:
                         query += y
@@ -74,15 +76,20 @@ class DbManager:
                         query += " and "
 
         elif query_method == QueryMethod.DELETE:
-            query = "delete from " + table_name + " where "
-            for x, y in condition.items():
-                if isinstance(y, str):
-                    y = "'" + y + "'"
-                query += x + " = " + y
-                if list(condition)[-1] != x:
-                    query += " and "
+            query = "delete from " + table_name
+            if condition is not None:
+                query + " where "
+                for x, y in condition.items():
+                    if isinstance(y, str):
+                        y = "'" + y + "'"
+                    query += x + " = " + y
+                    if list(condition)[-1] != x:
+                        query += " and "
 
         query += ";"
+        
+        if query_method == QueryMethod.DELETE:
+            print(query)
         res = cur.execute(query).fetchall()
         con.commit()
         con.close()

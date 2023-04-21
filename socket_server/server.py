@@ -16,6 +16,8 @@ class Server:
     UPDATE_MAP_DATA_2_INFO_LVL = "UPDATE_MAP_DATA_2"
 
     PLOTTER_INFO_LVL = "DATA_PLOTTER"
+    UPDATE_PLOTTER_INFO_LVL = "UPDATE_DATA_PLOTTER"
+
     ERROR_INFO_LVL = "ERROR"
 
     REQUEST_SUCCESS = '200'
@@ -134,8 +136,30 @@ class Server:
                                                             )
 
             self.num_distance = len(self.distances)
-            self.plotter = self.plotter = distance_plotter.DistancePlotter(self.num_distance, self.distances)
+            self.plotter = self.plotter = distance_plotter.DistancePlotter(self.num_distance, self.distances, self.db_manager)
             self.plotter.calculate_and_draw(self.distances)
+            clients.append((address[0], address[1]))
+
+        elif info_lvl == Server.UPDATE_PLOTTER_INFO_LVL:
+
+
+            new_distances = self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
+                                                            query_method=QueryMethod.SELECT,
+                                                            values={"sensor_1_data": "",
+                                                                    "sensor_2_data": ""},
+                                                            condition={"sensor_1_data": "null"},
+                                                            negativ_condition=True,
+                                                            )
+            new_distances += self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
+                                                            query_method=QueryMethod.SELECT,
+                                                            values={"sensor_1_data": "",
+                                                                    "sensor_2_data": ""},
+                                                            condition={"sensor_2_data": "null"},
+                                                            negativ_condition=True,
+                                                            )
+
+
+            self.plotter.redraw(len(new_distances), new_distances)
             clients.append((address[0], address[1]))
 
 
