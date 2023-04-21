@@ -7,18 +7,20 @@ import mbuild
 
 ts = None
 
-
+# Define the configuration class
 class Configuration:
 
     def __init__(self, data):
         self.data = data
         self.set_led_config()
 
+    # Set led config
     def set_led_config(self):
         color = self.data['color']
         halo.led.show_all(color['r'], color['g'], color['b'], 10)
 
 
+# Define the sockethandler class
 class SocketHandler:
 
     def __init__(self):
@@ -26,11 +28,13 @@ class SocketHandler:
         self.request_info_lvl = ''
         self.message = ''
 
+    # Connect to the Server
     def _connect_to_server(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(("10.65.4.32", 5001))
         return s
 
+    # Send a request to the server
     def _send_request(self):
         first_request = 1
 
@@ -42,6 +46,7 @@ class SocketHandler:
             }))
             time.sleep(0.5)
 
+            # check if a response is resived
             try:
                 response = s.recv(1024)
             except Exception as e:
@@ -52,10 +57,12 @@ class SocketHandler:
 
             s.close()
 
+            # If it's the first request after start, send initial data
             if first_request == 1:
                 self.send_map_data(0)
                 first_request = 0
 
+            # Send updated data
             time.sleep(10)
             self.send_map_data(1)
 
@@ -67,9 +74,11 @@ class SocketHandler:
         self.request_info_lvl = request_info_lvl
         self.message = message
 
+    # Function to stop the thread
     def close_thread(self):
         self.is_alive = 0
 
+    # Send new measure data
     def send_map_data(self, update):
 
         info_lvl_first = ""
@@ -130,26 +139,22 @@ class SocketHandler:
 def on_start():
     global ts
 
-
-    #while 1 == 1:
-    #    if mbuild.ultrasonic_sensor.get_distance(1) > 10:
-    #        print(mbuild.ultrasonic_sensor.get_distance(1))
-
-
+    # Connect to wifi
     halo.led.show_all(255, 255, 255, 10)
     halo.wifi.start(ssid='KR-yellow', password='2601-9345-2477', mode=halo.wifi.WLAN_MODE_STA)
 
+    # If its not connected, show white leds
     while halo.wifi.is_connected() != 1:
         time.sleep(0.1)
 
+    # If connected to the wifi, start the socket and show led's by config
     halo.led.off_all()
     ts = SocketHandler()
     ts.init_request('NEW_CONNECTION', '')
     _thread.start_new_thread(ts._send_request, ())
 
-    # ts.close_thread()
 
-
+# Test socket connection
 @event.button_pressed
 def on_button_pressed():
     global ts
