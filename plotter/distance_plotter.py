@@ -16,6 +16,9 @@ class DistancePlotter:
         self.screen = turtle.Screen()  # Get the turtle screen
         self.right_distances = []
         self.left_distances = []
+        self.left_coordinates_init = []
+        self.right_coordinates_init = []
+
 
     def calculate_coordinates(self, distances):
         angle_step = 360 / len(distances)
@@ -36,18 +39,6 @@ class DistancePlotter:
                 self.right_distances.append(distance[1])
 
         return left_coordinates, right_coordinates
-
-    def shoelace_formula(self, coordinates):
-        n = len(coordinates)
-        area = 0
-
-        for i in range(n):
-            j = (i + 1) % n
-            area += coordinates[i][0] * coordinates[j][1]
-            area -= coordinates[j][0] * coordinates[i][1]
-
-        area = abs(area) / 2
-        return area
 
     def draw(self, coordinates):
         self.turtle.goto(coordinates[0])
@@ -88,21 +79,8 @@ class DistancePlotter:
         self.turtle.goto(0, 350)
         self.turtle.penup()
 
-    def save_as_png(self, filename):
-        cv = turtle.getcanvas()
-        cv.postscript(file=filename, colormode="color")
-        try:
-            img = Image.open(filename)
-            img.save("test.png")
-        except ImportError:
-            print("PIL library not installed, saved as .eps")
-
     def calculate_and_draw(self, distances):
         left_coordinates, right_coordinates = self.calculate_coordinates(distances)
-        area_left = self.shoelace_formula(left_coordinates)
-        area_right = self.shoelace_formula(right_coordinates)
-        print("Fläche links:", area_left)
-        print("Fläche rechts:", area_right)
 
         first_distance = distances[0]
         last_distance = distances[35]
@@ -120,10 +98,8 @@ class DistancePlotter:
         self.draw(right_coordinates)
         self.draw_center_to_first_point(right_coordinates)  # Add this line to draw the green line
         self.draw_directions()  # Draw the directions
-        # self.save_as_png("output")  # Save the output as a PNG file
 
         self.screen.update()  # Update the screen to display the drawings
-        time.sleep(5)  # Pause for 5 seconds
 
     def clear_drawing(self):
         self.turtle.clear()
