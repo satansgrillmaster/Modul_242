@@ -137,7 +137,7 @@ class Server:
 
             self.num_distance = len(self.distances)
             self.plotter = self.plotter = distance_plotter.DistancePlotter(self.num_distance, self.distances, self.db_manager)
-            self.plotter.calculate_and_draw(self.distances)
+            self.plotter.calculate_and_draw_init(self.distances)
             clients.append((address[0], address[1]))
 
         elif info_lvl == Server.UPDATE_PLOTTER_INFO_LVL:
@@ -159,7 +159,7 @@ class Server:
                                                             )
 
 
-            self.plotter.redraw(len(new_distances), new_distances)
+            self.plotter.redraw(len(new_distances), new_distances, self.distances)
             clients.append((address[0], address[1]))
 
 

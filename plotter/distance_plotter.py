@@ -19,7 +19,6 @@ class DistancePlotter:
         self.left_coordinates_init = []
         self.right_coordinates_init = []
 
-
     def calculate_coordinates(self, distances):
         angle_step = 360 / len(distances)
         left_coordinates = []
@@ -39,6 +38,19 @@ class DistancePlotter:
                 self.right_distances.append(distance[1])
 
         return left_coordinates, right_coordinates
+
+    def compare_coordinates(self, coordinates1, coordinates2):
+        if len(coordinates1) != len(coordinates2):
+            raise ValueError("Die Länge der Koordinatensätze muss gleich sein.")
+
+        differences = []
+        for coord1, coord2 in zip(coordinates1, coordinates2):
+            x_diff = abs(coord1[0] - coord2[0])
+            y_diff = abs(coord1[1] - coord2[1])
+            differences.append((x_diff, y_diff))
+        print(differences)
+
+        return differences
 
     def draw(self, coordinates):
         self.turtle.goto(coordinates[0])
@@ -79,7 +91,7 @@ class DistancePlotter:
         self.turtle.goto(0, 350)
         self.turtle.penup()
 
-    def calculate_and_draw(self, distances):
+    def calculate_and_draw_init(self, distances):
         left_coordinates, right_coordinates = self.calculate_coordinates(distances)
 
         first_distance = distances[0]
@@ -101,18 +113,50 @@ class DistancePlotter:
 
         self.screen.update()  # Update the screen to display the drawings
 
+    def calculate_and_draw(self, distances1, distances2):
+        left_coordinates1, right_coordinates1 = self.calculate_coordinates(distances1)
+        left_coordinates2, right_coordinates2 = self.calculate_coordinates(distances2)
+
+        differences_left = self.compare_coordinates(left_coordinates1, left_coordinates2)
+        differences_right = self.compare_coordinates(right_coordinates1, right_coordinates2)
+
+        self.draw_axes()  # Draw the coordinate system
+
+        for coord1, diff in zip(left_coordinates1, differences_left):
+            color = "red" if diff[0] > 5 and diff[1] > 5 else "green"
+            self.turtle.pencolor(color)
+            self.turtle.goto(coord1)
+            self.turtle.pendown()
+            self.turtle.dot(5)
+            self.turtle.penup()
+
+        for coord1, diff in zip(right_coordinates1, differences_right):
+            color = "red" if diff[0] > 5 and diff[1] > 5 else "green"
+            self.turtle.pencolor(color)
+            self.turtle.goto(coord1)
+            self.turtle.pendown()
+            self.turtle.dot(5)
+            self.turtle.penup()
+
+        self.turtle.pencolor("black")  # Reset the pen color to black
+        self.draw_directions()  # Draw the directions
+
+        self.screen.update()  # Update the screen to display the drawings
+
+
+
     def clear_drawing(self):
         self.turtle.clear()
         self.turtle.penup()
         self.right_distances = []
         self.left_distances = []
 
-    def redraw(self, num_distances, distances):
+    def redraw(self, num_distances, distances, distances2):
         self.clear_drawing()
         self.num_distances = num_distances
         self.distances = distances
         self.angle_step = 360 / num_distances
-        self.calculate_and_draw(distances)
+        self.calculate_and_draw(distances, distances2)
         self.db_manager.execute_query(table_name=Table.UPDATE_SENSOR_DATA.value,
                                       query_method=QueryMethod.DELETE,
                                       values={},
